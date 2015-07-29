@@ -1,7 +1,7 @@
 package simulator
 
 import (
-//"log"
+	"fmt"
 )
 
 type Player struct {
@@ -26,6 +26,8 @@ type ShipType struct {
 	BaseHull   float64
 	Amount     int
 	Explosions int
+	Statistics []int //Remaining ships after every battle
+	Rapidfires map[string]float64
 }
 
 type ShipUnit struct {
@@ -51,19 +53,29 @@ func NewPlayer() *Player {
 	return pl
 }
 
-func (this *Player) Expand(group *FleetGroup, resources *map[string]Resource) {
+func (this *Player) Expand(group *FleetGroup, resources map[string]Resource) {
 	this.processShipTypes(resources)
 
+	ships := &group.Ships
+
+	//fmt.Println("Expandiendo")
+
+	for _, t := range this.ShipTypes {
+		*ships = append(*ships, t.Expand()...)
+
+	}
 }
 
-func (this *Player) processShipTypes(resources *map[string]Resource) {
+func (this *Player) processShipTypes(resources map[string]Resource) {
 
 	var i = 0
 
-	for _, amount := range this.OriginalFleet {
+	fmt.Println("Cantidad Items ", len(this.OriginalFleet))
+
+	for id, amount := range this.OriginalFleet {
 
 		st := &ShipType{}
-		st.Init(amount, this.MilitaryTech, this.DefenseTech, this.HullTech)
+		st.Init(resources[id], amount, this.MilitaryTech, this.DefenseTech, this.HullTech)
 		this.ShipTypes = append(this.ShipTypes, st)
 		i++
 	}
@@ -71,16 +83,45 @@ func (this *Player) processShipTypes(resources *map[string]Resource) {
 
 /* ShipType functions */
 
-func (this *ShipType) Init(amount int, mtech int, dtech int, htech int) {
+func (this *ShipType) Init(resource Resource, amount int, mtech int, dtech int, htech int) {
 	this.Amount = amount
+
+	d := 1 + (float64(mtech) * 0.1)
+	s := 1 + (float64(dtech) * 0.1)
+	h := (1 + (float64(htech) * 0.1)) * 0.1
+
+	this.BaseAttack = d * resource.Attack
+	this.BaseShield = s * resource.Defense
+	this.BaseHull = h * resource.Hull
+
+	this.Rapidfires = resource.Rapidfires
+}
+
+func (this *ShipType) Expand() []*ShipUnit {
+	sh := make([]*ShipUnit, this.Amount)
+
+	for i := 0; i < this.Amount; i++ {
+		sh[i] = &ShipUnit{Type: this, Attack: this.BaseAttack, Shield: this.BaseShield, Hull: this.BaseHull}
+	}
+
+	fmt.Printf("%#v\n", sh)
+
+	return sh
+}
+
+/* TO DO */
+func (this *ShipType) CalcCapacity() {
+
+}
+
+func (this *ShipType) LogBattle() {
+
 }
 
 /* FleetGroup functions */
 
-func NewFleetGroup() *FleetGroup {
-	group := &FleetGroup{}
-
-	return group
+func (this *FleetGroup) Init() {
+	this.Ships = []*ShipUnit{}
 }
 
 func (this *FleetGroup) attack(other *FleetGroup) bool {
