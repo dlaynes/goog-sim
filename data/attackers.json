@@ -1,0 +1,11 @@
+{
+    "0001" : {
+        "id" : "0001",
+        "name": "Attacker 1",
+        "mainplanet": {"galaxy":1,"system":1,"planet":1,"postype":1},
+        "originalfleet":{"204": 1500000},
+        "militarytech":10,
+        "defensetech":10,
+        "hulltech":10
+    }
+}
