@@ -14,23 +14,23 @@ import (
 
 func main() {
 	var profiler = &tools.Profiler{}
-	profiler.Init(30)
+	profiler.Init(40)
 
 	profiler.StartTask("load_resources")
 
 	var attackerGroup = &simulator.FleetGroup{}
 	var defenderGroup = &simulator.FleetGroup{}
 
-	var resources = map[string]simulator.Resource{}
+	var resources = map[string]*simulator.Resource{}
 	ParseJson("./data/resources.json", &resources)
 
 	var rapidfire = map[string]map[string]float64{}
 	ParseJson("./data/rapidfire.json", &rapidfire)
 
-	var attackers = map[string]simulator.Player{}
+	var attackers = map[string]*simulator.Player{}
 	ParseJson("./data/attackers.json", &attackers)
 
-	var defenders = map[string]simulator.Player{}
+	var defenders = map[string]*simulator.Player{}
 	ParseJson("./data/defenders.json", &defenders)
 
 	profiler.EndTask("load_resources")
@@ -71,7 +71,7 @@ func main() {
 	/* Battle */
 	simulator.SeedRand()
 
-	profiler.StartTask("init_battle")
+	profiler.StartTask("full_battle")
 	loops := 6
 	idx := ""
 
@@ -81,14 +81,16 @@ func main() {
 	//successDf := true
 
 	for i := 0; i < loops; i++ {
-		idx = strconv.Itoa(i)
+		idx = strconv.Itoa(i + 1)
+
+		profiler.StartTask("full_round_" + idx)
 
 		if len(attackerGroup.Ships) < 1 {
 			fmt.Println("Attacker group has no remaining ships in battle")
 			exitBattle = true
 		}
 		if len(defenderGroup.Ships) < 1 {
-			fmt.Println("Attacker group has no remaining ships in battle")
+			fmt.Println("Defender group has no remaining ships in battle")
 			exitBattle = true
 		}
 
@@ -112,18 +114,22 @@ func main() {
 		defenderGroup.Clean()
 		profiler.EndTask("battle_clean_df_" + idx)
 
-		fmt.Println("Round " + idx + " has ended")
+		//fmt.Println("Round " + idx + " has ended")
+
+		profiler.EndTask("full_round_" + idx)
 
 	}
-	profiler.EndTask("init_battle")
+	profiler.EndTask("full_battle")
 
 	//fmt.Printf("%#v\n", attackerGroup.Ships)
 	//fmt.Printf("%#v\n", defenderGroup.Ships)
 
 	/* Results */
 
-	for taskName, theTask := range profiler.Tasks {
-		fmt.Printf("Task "+taskName+" took %v \n", theTask.EndTime.Sub(theTask.StartTime))
+	tasks := profiler.GetTasks()
+	for n := 0; n < len(tasks); n++ {
+		theTask := tasks[n]
+		fmt.Printf("Task "+theTask.Label+" took %v \n", theTask.EndTime.Sub(theTask.StartTime))
 	}
 
 	fmt.Printf("Ok!.\n")

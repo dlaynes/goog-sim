@@ -1,8 +1,9 @@
 package simulator
 
 import (
-	//"fmt"
+	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -37,7 +38,6 @@ type ShipUnit struct {
 	A float64
 	S float64
 	H float64
-	X bool
 }
 
 type FleetGroup struct {
@@ -61,7 +61,7 @@ func NewPlayer() *Player {
 	return pl
 }
 
-func (this *Player) Expand(group *FleetGroup, resources map[string]Resource) {
+func (this *Player) Expand(group *FleetGroup, resources map[string]*Resource) {
 	this.processShipTypes(resources)
 
 	ships := &group.Ships
@@ -74,7 +74,7 @@ func (this *Player) Expand(group *FleetGroup, resources map[string]Resource) {
 	}
 }
 
-func (this *Player) processShipTypes(resources map[string]Resource) {
+func (this *Player) processShipTypes(resources map[string]*Resource) {
 
 	var i = 0
 
@@ -91,17 +91,20 @@ func (this *Player) processShipTypes(resources map[string]Resource) {
 
 /* ShipType functions */
 
-func (this *ShipType) Init(resource Resource, amount int, mtech int, dtech int, htech int) {
+func (this *ShipType) Init(resource *Resource, amount int, mtech int, dtech int, htech int) {
 	this.Amount = amount
 
 	d := 1 + (float64(mtech) * 0.1)
 	s := 1 + (float64(dtech) * 0.1)
 	h := (1 + (float64(htech) * 0.1)) * 0.1
 
-	this.Res = &resource
+	this.Res = resource
 	this.BaseAttack = d * resource.Attack
 	this.BaseShield = s * resource.Defense
 	this.BaseHull = h * resource.Hull
+
+	//fmt.Println("Looking for Rapidire values on " + resource.Id)
+	//fmt.Printf("%#v\n", resource)
 
 	this.Rapidfires = resource.Rapidfires
 }
@@ -139,7 +142,6 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 	var Dm, Dc, De, xp float64
 	var c int
 	var fPtr, uPtr *ShipUnit
-	var resId string
 
 	running := true
 
@@ -163,7 +165,7 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 
 			uPtr = otherGroup.Ships[rand.Intn(m)]
 
-			if !uPtr.X {
+			if uPtr.H != 0.0 {
 				//Check if the shot is strong enough against Large Shield Domes
 				if Dc > uPtr.T.BaseShield {
 					if Dm > uPtr.S {
@@ -179,13 +181,13 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 							xp = (uPtr.T.BaseHull - uPtr.H) / uPtr.H
 							if xp > 0.3 && rand.Float64() < xp {
 								//boom!
-								uPtr.X = true
+								uPtr.H = 0.0
 								uPtr.T.Explosions += 1
 							}
 
 						} else {
 							//Kaboom!
-							uPtr.X = true
+							uPtr.H = 0.0
 							uPtr.T.Explosions += 1
 						}
 
@@ -199,21 +201,20 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 				}
 			}
 
-			//Rapidfire calculations
-			resId = uPtr.T.Res.Id
-			val, ok := fPtr.T.Rapidfires[resId]
+			//fmt.Printf("%#v\n", fPtr.T.Rapidfires)
 
-			if ok {
-				if val > 0.0 {
-					//Do we get another turn?
-					if rand.Float64() < fPtr.T.Rapidfires[uPtr.T.Res.Id] {
-						this.TurnAttacks++
-					} else {
-						running = false
-					}
+			//Rapidfire calculations
+			if val, ok := fPtr.T.Rapidfires[uPtr.T.Res.Id]; ok {
+				//Do we get another turn?
+
+				//fmt.Println("Rapidfire value " + strconv.FormatFloat(val, 'g', 1, 64))
+
+				if rand.Float64() < val {
+					this.TurnAttacks++
 				} else {
 					running = false
 				}
+
 			} else {
 				running = false
 			}
@@ -224,9 +225,12 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 }
 
 func (this *FleetGroup) Clean() {
+
+	fmt.Println("Length before cleanup " + strconv.Itoa(len(this.Ships)))
+
 	newShips := make([]*ShipUnit, 0)
 	for _, ship := range this.Ships {
-		if ship.X {
+		if ship.H != 0.0 {
 			ship.S = ship.T.BaseShield
 			newShips = append(newShips, ship)
 		} else {
@@ -234,6 +238,8 @@ func (this *FleetGroup) Clean() {
 		}
 	}
 	this.Ships = newShips
+
+	fmt.Println("Length after cleanup  " + strconv.Itoa(len(this.Ships)))
 }
 
 func (this *FleetGroup) StartStatistics() {

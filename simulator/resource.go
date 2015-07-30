@@ -67,11 +67,17 @@ func (this *Resource) initRapidfire(rapidfire map[string]map[string]float64) {
 	ln := len(rf)
 	this.Rapidfires = make(map[string]float64)
 
+	//
+
 	if ln > 0 {
 		for id, r := range rf {
 			//i, err := strconv.Atoi(id)
 
-			this.Rapidfires[id] = (1 - (1 / r))
+			this.Rapidfires[id] = (1.0 - (1.0 / r))
+
+			//fmt.Println("Adding a new rapidfire rule: " + strconv.FormatFloat(this.Rapidfires[id], 'g', 1, 64))
 		}
 	}
+
+	//fmt.Printf("%#v\n", this.Rapidfires)
 }
