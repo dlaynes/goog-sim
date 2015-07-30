@@ -98,6 +98,7 @@ func (this *ShipType) Init(resource Resource, amount int, mtech int, dtech int, 
 	s := 1 + (float64(dtech) * 0.1)
 	h := (1 + (float64(htech) * 0.1)) * 0.1
 
+	this.Res = &resource
 	this.BaseAttack = d * resource.Attack
 	this.BaseShield = s * resource.Defense
 	this.BaseHull = h * resource.Hull
@@ -200,8 +201,9 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 
 			//Rapidfire calculations
 			resId = uPtr.T.Res.Id
+			val, ok := fPtr.T.Rapidfires[resId]
 
-			if val, ok := fPtr.T.Rapidfires[resId]; ok {
+			if ok {
 				if val > 0.0 {
 					//Do we get another turn?
 					if rand.Float64() < fPtr.T.Rapidfires[uPtr.T.Res.Id] {
@@ -222,12 +224,11 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 }
 
 func (this *FleetGroup) Clean() {
-	newShips := make([]*ShipUnit, len(this.Ships))
-	i := 0
+	newShips := make([]*ShipUnit, 0)
 	for _, ship := range this.Ships {
 		if ship.X {
 			ship.S = ship.T.BaseShield
-			newShips[i] = ship
+			newShips = append(newShips, ship)
 		} else {
 			ship = nil
 		}

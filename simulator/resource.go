@@ -65,7 +65,7 @@ func (this *Resource) Init(rapidfire map[string]map[string]float64) {
 func (this *Resource) initRapidfire(rapidfire map[string]map[string]float64) {
 	rf := rapidfire[this.Id]
 	ln := len(rf)
-	this.Rapidfires = make(map[string]float64, ln)
+	this.Rapidfires = make(map[string]float64)
 
 	if ln > 0 {
 		for id, r := range rf {
