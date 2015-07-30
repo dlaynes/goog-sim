@@ -64,9 +64,10 @@ func (this *Resource) Init(rapidfire map[string]map[string]float64) {
 
 func (this *Resource) initRapidfire(rapidfire map[string]map[string]float64) {
 	rf := rapidfire[this.Id]
-	if len(rf) > 0 {
-		this.Rapidfires = make(map[string]float64, len(rf))
+	ln := len(rf)
+	this.Rapidfires = make(map[string]float64, ln)
 
+	if ln > 0 {
 		for id, r := range rf {
 			//i, err := strconv.Atoi(id)
 

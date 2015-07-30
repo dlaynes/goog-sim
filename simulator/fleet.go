@@ -1,7 +1,9 @@
 package simulator
 
 import (
-	"fmt"
+	//"fmt"
+	"math/rand"
+	"time"
 )
 
 type Player struct {
@@ -31,18 +33,24 @@ type ShipType struct {
 }
 
 type ShipUnit struct {
-	Type     *ShipType
-	Attack   float64
-	Shield   float64
-	Hull     float64
-	Exploded bool
+	T *ShipType
+	A float64
+	S float64
+	H float64
+	X bool
 }
 
 type FleetGroup struct {
-	Ships           []*ShipUnit
-	ThisTurnDamage  float64
-	ThisTurnDefense float64
-	ThisTurnAttacks int
+	Ships       []*ShipUnit
+	TurnDamage  float64
+	TurnDefense float64
+	TurnAttacks int
+}
+
+/* Globals */
+
+func SeedRand() {
+	rand.Seed(time.Now().Unix())
 }
 
 /* Player functions */
@@ -70,7 +78,7 @@ func (this *Player) processShipTypes(resources map[string]Resource) {
 
 	var i = 0
 
-	fmt.Println("Cantidad Items ", len(this.OriginalFleet))
+	//fmt.Println("Cantidad Items ", len(this.OriginalFleet))
 
 	for id, amount := range this.OriginalFleet {
 
@@ -101,10 +109,10 @@ func (this *ShipType) Expand() []*ShipUnit {
 	sh := make([]*ShipUnit, this.Amount)
 
 	for i := 0; i < this.Amount; i++ {
-		sh[i] = &ShipUnit{Type: this, Attack: this.BaseAttack, Shield: this.BaseShield, Hull: this.BaseHull}
+		sh[i] = &ShipUnit{T: this, A: this.BaseAttack, S: this.BaseShield, H: this.BaseHull}
 	}
 
-	fmt.Printf("%#v\n", sh)
+	//fmt.Printf("%#v\n", sh)
 
 	return sh
 }
@@ -124,11 +132,109 @@ func (this *FleetGroup) Init() {
 	this.Ships = []*ShipUnit{}
 }
 
-func (this *FleetGroup) attack(other *FleetGroup) bool {
+func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
+
+	m := len(otherGroup.Ships)
+	var Dm, Dc, De, xp float64
+	var c int
+	var fPtr, uPtr *ShipUnit
+	var resId string
+
+	running := true
+
+	this.TurnAttacks = len(this.Ships)
+	c = this.TurnAttacks
+
+	//r := &rand.Rand
+
+	//TO DO: add concurrency, and use binary operations ...
+	for i := 0; i < c; i++ {
+
+		//Init some variables for the current Ship
+		fPtr = this.Ships[i]
+		Dm = fPtr.T.BaseAttack
+		Dc = Dm * 100.0
+		running = true
+
+		//Current Ship loop
+		for running {
+			this.TurnDamage += Dm //We shoot! and we update the statistics accordingly
+
+			uPtr = otherGroup.Ships[rand.Intn(m)]
+
+			if !uPtr.X {
+				//Check if the shot is strong enough against Large Shield Domes
+				if Dc > uPtr.T.BaseShield {
+					if Dm > uPtr.S {
+						//Shield wasn't strong enough to survive the shot
+						De = Dm - uPtr.S           //New damage after substracting the shield points
+						this.TurnDefense += uPtr.S //shield protection statistics
+						uPtr.S = 0.0
+
+						//Check if the ships "health" is greater than the damage
+						if De < uPtr.H {
+							uPtr.H -= De
+
+							xp = (uPtr.T.BaseHull - uPtr.H) / uPtr.H
+							if xp > 0.3 && rand.Float64() < xp {
+								//boom!
+								uPtr.X = true
+								uPtr.T.Explosions += 1
+							}
+
+						} else {
+							//Kaboom!
+							uPtr.X = true
+							uPtr.T.Explosions += 1
+						}
+
+					} else {
+						uPtr.S -= Dm           // The shield survived the shot. We decrease the shield points of the target
+						this.TurnDefense += Dm // We update the shield protection statistics accordingly
+					}
+				} else {
+					this.TurnDefense += Dm
+					running = false
+				}
+			}
+
+			//Rapidfire calculations
+			resId = uPtr.T.Res.Id
+
+			if val, ok := fPtr.T.Rapidfires[resId]; ok {
+				if val > 0.0 {
+					//Do we get another turn?
+					if rand.Float64() < fPtr.T.Rapidfires[uPtr.T.Res.Id] {
+						this.TurnAttacks++
+					} else {
+						running = false
+					}
+				} else {
+					running = false
+				}
+			} else {
+				running = false
+			}
+		}
+	}
 
 	return true
 }
 
-func (this *FleetGroup) clean() {
+func (this *FleetGroup) Clean() {
+	newShips := make([]*ShipUnit, len(this.Ships))
+	i := 0
+	for _, ship := range this.Ships {
+		if ship.X {
+			ship.S = ship.T.BaseShield
+			newShips[i] = ship
+		} else {
+			ship = nil
+		}
+	}
+	this.Ships = newShips
+}
+
+func (this *FleetGroup) StartStatistics() {
 
 }
