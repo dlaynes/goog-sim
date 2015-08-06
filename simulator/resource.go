@@ -1,8 +1,8 @@
 package simulator
 
 import (
-//"fmt"
-//"strconv"
+	//"fmt"
+	"strconv"
 )
 
 const (
@@ -27,7 +27,7 @@ type Position struct {
 }
 
 type Resource struct {
-	Id                 string
+	Id                 int
 	Name               string
 	Metal              int
 	Crystal            int
@@ -48,7 +48,7 @@ type Resource struct {
 	Consumptions       map[string]float64
 	CurrentConsumption float64
 
-	Rapidfires map[string]float64
+	Rapidfires map[int]float64
 	ResType    int
 }
 
@@ -63,19 +63,18 @@ func (this *Resource) Init(rapidfire map[string]map[string]float64) {
 }
 
 func (this *Resource) initRapidfire(rapidfire map[string]map[string]float64) {
-	rf := rapidfire[this.Id]
+	rf := rapidfire[strconv.Itoa(this.Id)]
 	ln := len(rf)
-	this.Rapidfires = make(map[string]float64)
+	this.Rapidfires = make(map[int]float64)
 
 	//
 
 	if ln > 0 {
 		for id, r := range rf {
-			//i, err := strconv.Atoi(id)
+			i, _ := strconv.Atoi(id)
+			this.Rapidfires[i] = (1.0 - (1.0 / r))
 
-			this.Rapidfires[id] = (1.0 - (1.0 / r))
-
-			//fmt.Println("Adding a new rapidfire rule: " + strconv.FormatFloat(this.Rapidfires[id], 'g', 1, 64))
+			//fmt.Println("Adding a new rapidfire rule: " + strconv.FormatFloat(this.Rapidfires[i], 'g', 1, 64))
 		}
 	}
 

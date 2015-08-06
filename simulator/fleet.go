@@ -8,7 +8,7 @@ import (
 )
 
 type Player struct {
-	Id            string
+	Id            int
 	Name          string
 	MainPlanet    *Position
 	ShipTypes     []*ShipType
@@ -30,7 +30,7 @@ type ShipType struct {
 	Amount     int
 	Explosions int
 	Statistics []int //Remaining ships after every battle
-	Rapidfires map[string]float64
+	Rapidfires map[int]float64
 }
 
 type ShipUnit struct {
@@ -38,6 +38,7 @@ type ShipUnit struct {
 	A float64
 	S float64
 	H float64
+	//U bool
 }
 
 type FleetGroup struct {
@@ -70,7 +71,14 @@ func (this *Player) Expand(group *FleetGroup, resources map[string]*Resource) {
 
 	for _, t := range this.ShipTypes {
 		*ships = append(*ships, t.Expand()...)
+	}
+}
 
+func (this *Player) ExpandTo(group *FleetGroup, resources map[string]*Resource) {
+	this.processShipTypes(resources)
+
+	for _, t := range this.ShipTypes {
+		t.ExpandTo(group.Ships)
 	}
 }
 
@@ -121,6 +129,20 @@ func (this *ShipType) Expand() []*ShipUnit {
 	return sh
 }
 
+func (this *ShipType) ExpandTo(ships []*ShipUnit) {
+	l := len(ships)
+
+	fmt.Println("Len " + strconv.Itoa(l))
+	fmt.Println("Capacity " + strconv.Itoa(cap(ships)))
+	fmt.Println("Amount " + strconv.Itoa(this.Amount))
+
+	//not working ?_?
+	for i := l; i < this.Amount+l; i++ {
+		//fmt.Println("Appending to " + strconv.Itoa(i))
+		ships[i] = &ShipUnit{T: this, A: this.BaseAttack, S: this.BaseShield, H: this.BaseHull}
+	}
+}
+
 /* TO DO */
 func (this *ShipType) CalcCapacity() {
 
@@ -131,10 +153,15 @@ func (this *ShipType) LogBattle() {
 }
 
 /* FleetGroup functions */
-
 func (this *FleetGroup) Init() {
-	this.Ships = []*ShipUnit{}
+	this.Ships = make([]*ShipUnit, 0)
 }
+
+/*
+func (this *FleetGroup) InitWith(length int) {
+	this.Ships = make([]*ShipUnit, 0, length)
+}
+*/
 
 func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 
@@ -193,7 +220,7 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 
 					} else {
 						uPtr.S -= Dm           // The shield survived the shot. We decrease the shield points of the target
-						this.TurnDefense += Dm // We update the shield protection statistics accordingly
+						this.TurnDefense += Dm // We update the shield protection statistics
 					}
 				} else {
 					this.TurnDefense += Dm
@@ -224,12 +251,112 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 	return true
 }
 
+/*
+func (this *FleetGroup) AttackParallel(otherGroup *FleetGroup) bool {
+	m := len(otherGroup.Ships)
+	//var Dm, Dc, De, xp float64
+	//var c int
+	//var fPtr, uPtr *ShipUnit
+
+	//running := true
+
+	this.TurnAttacks = len(this.Ships)
+	c := this.TurnAttacks
+
+	sem := make(chan bool, c)
+
+	for i := 0; i < c; i++ {
+		go func(fPtr *ShipUnit) {
+
+			Dm := fPtr.T.BaseAttack
+			Dc := Dm * 100.0
+			running := true
+
+			for running {
+				this.TurnDamage += Dm //We shoot! and we update the statistics accordingly
+
+				uPtr := otherGroup.Ships[rand.Intn(m)]
+
+				if uPtr.H != 0.0 {
+					//Check if the shot is strong enough against Large Shield Domes
+					if Dc > uPtr.T.BaseShield {
+						if Dm > uPtr.S {
+							//Shield wasn't strong enough to survive the shot
+							De := Dm - uPtr.S          //New damage after substracting the shield points
+							this.TurnDefense += uPtr.S //shield protection statistics
+							uPtr.S = 0.0
+
+							//Check if the ships "health" is greater than the damage
+							if De < uPtr.H {
+								uPtr.H -= De
+
+								xp := (uPtr.T.BaseHull - uPtr.H) / uPtr.H
+								if xp > 0.3 && rand.Float64() < xp {
+									//boom!
+									uPtr.H = 0.0
+									uPtr.T.Explosions += 1
+								}
+
+							} else {
+								//Kaboom!
+								uPtr.H = 0.0
+								uPtr.T.Explosions += 1
+							}
+
+						} else {
+							uPtr.S -= Dm           // The shield survived the shot. We decrease the shield points of the target
+							this.TurnDefense += Dm // We update the shield protection statistics
+						}
+					} else {
+						this.TurnDefense += Dm
+						running = false
+					}
+				}
+
+				//fmt.Printf("%#v\n", fPtr.T.Rapidfires)
+
+				//Rapidfire calculations
+				if val, ok := fPtr.T.Rapidfires[uPtr.T.Res.Id]; ok {
+					//Do we get another turn?
+
+					//fmt.Println("Rapidfire value " + strconv.FormatFloat(val, 'g', 1, 64))
+
+					if rand.Float64() < val {
+						this.TurnAttacks++
+					} else {
+						running = false
+					}
+
+				} else {
+					running = false
+				}
+			}
+
+			//end goroutine
+			sem <- true
+		}(this.Ships[i])
+	}
+
+	//Huh
+	for i := 0; i < c; i++ {
+		<-sem
+	}
+
+	return true
+}
+*/
+
 func (this *FleetGroup) Clean() {
 
 	fmt.Println("Length before cleanup " + strconv.Itoa(len(this.Ships)))
 
-	newShips := make([]*ShipUnit, 0)
-	for _, ship := range this.Ships {
+	//Adding the approximate capacity. function is now 4x/5x faster
+	//However when applying this patch elsewhere, this makes the init_groups section 10x slower, so...
+	newShips := make([]*ShipUnit, 0, len(this.Ships))
+
+	c := len(this.Ships)
+	for i := 0; i < c; i++ {
+		ship := this.Ships[i]
 		if ship.H != 0.0 {
 			ship.S = ship.T.BaseShield
 			newShips = append(newShips, ship)
@@ -242,6 +369,9 @@ func (this *FleetGroup) Clean() {
 	fmt.Println("Length after cleanup  " + strconv.Itoa(len(this.Ships)))
 }
 
-func (this *FleetGroup) StartStatistics() {
+func (this *FleetGroup) CalcStatistics(round int) {
+	//TO DO: generate statistics report
 
+	this.TurnDamage = 0.0
+	this.TurnDefense = 0.0
 }

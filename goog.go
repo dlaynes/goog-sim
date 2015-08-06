@@ -27,10 +27,10 @@ func main() {
 	var rapidfire = map[string]map[string]float64{}
 	ParseJson("./data/rapidfire.json", &rapidfire)
 
-	var attackers = map[string]*simulator.Player{}
+	var attackers = []*simulator.Player{}
 	ParseJson("./data/attackers.json", &attackers)
 
-	var defenders = map[string]*simulator.Player{}
+	var defenders = []*simulator.Player{}
 	ParseJson("./data/defenders.json", &defenders)
 
 	profiler.EndTask("load_resources")
@@ -44,10 +44,28 @@ func main() {
 	profiler.StartTask("init_groups")
 
 	for _, res := range resources {
-		//id.(string)
-		//res.(simulator.Resource)
 		res.Init(rapidfire)
 	}
+
+	/*
+		profiler.StartTask("calc_fleet_size")
+		aSize := 0
+		dSize := 0
+		for _, pl := range attackers {
+			for _, amount := range pl.OriginalFleet {
+				aSize += amount
+			}
+		}
+		fmt.Println("Size attackers" + strconv.Itoa(aSize))
+
+		for _, pl2 := range defenders {
+			for _, amount2 := range pl2.OriginalFleet {
+				dSize += amount2
+			}
+		}
+		fmt.Println("Size defenders" + strconv.Itoa(dSize))
+		profiler.EndTask("calc_fleet_size")
+	*/
 
 	profiler.StartTask("init_attackers")
 	attackerGroup.Init()
@@ -63,8 +81,8 @@ func main() {
 	}
 	profiler.EndTask("init_defenders")
 
-	attackerGroup.StartStatistics()
-	defenderGroup.StartStatistics()
+	attackerGroup.CalcStatistics(0)
+	defenderGroup.CalcStatistics(0)
 
 	profiler.EndTask("init_groups")
 
@@ -83,8 +101,6 @@ func main() {
 	for i := 0; i < loops; i++ {
 		idx = strconv.Itoa(i + 1)
 
-		profiler.StartTask("full_round_" + idx)
-
 		if len(attackerGroup.Ships) < 1 {
 			fmt.Println("Attacker group has no remaining ships in battle")
 			exitBattle = true
@@ -97,6 +113,7 @@ func main() {
 		if exitBattle {
 			break
 		}
+		profiler.StartTask("full_round_" + idx)
 
 		profiler.StartTask("battle_round_att_" + idx)
 		_ = attackerGroup.Attack(defenderGroup)
@@ -117,6 +134,9 @@ func main() {
 		//fmt.Println("Round " + idx + " has ended")
 
 		profiler.EndTask("full_round_" + idx)
+
+		attackerGroup.CalcStatistics(i + 1)
+		defenderGroup.CalcStatistics(i + 1)
 
 	}
 	profiler.EndTask("full_battle")

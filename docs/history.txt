@@ -1,0 +1,124 @@
+neoarcknight - at  * gmail - dot * com
+No spam please.
+
+
+Ogame Virtual, aplicación basada en el sistema de batallas de ogame. Creada por NeoArc, en lenguaje php :)
+Todos los archivos incluidos son originales de Ogame Virtual, exceptuando las imágenes.
+
+10-09-07
+Version actual 0.44
+El mayor problema actual es la velocidad del script. 
+Las únicas soluciones parecen ser escribir una extension en php, o volcar todo el proyecto a java (jsp?).
+Mientras tanto, hay que añadir el ingreso de datos por páginas web, y especializar las clases con respecto a este tema...
+
+
+10-09-07
+Version actual 0.45
+La velocidad del script ha sido mejorada en 50% debido a la implementacion de funciones, y la eliminacion de algunas clases.
+----------------------- To do -------------------------:
+Cambiar el objeto UnitType a Array de indices numericos. (Y cambiar varios archivos.)
+
+29-09-07
+Version 0.46
+La clase UnitType ha sido mantenida, debido a su desempeño en las pruebas.
+Eliminación de HTMLpreview, y algunas mejoras en el rendimiento de la aplicación.
+
+12-04-09
+Version 0.48
+Pues la versíon 0.47 se me ha perdido, al parecer.
+Se removió el uso de constantes en $pricelist, Se rediseñó HTMLpreview ( renombrada a BattleReport ), y otros cambios.
+Usando un callback para limpiar las flotas de naves, y mt_rand()%100 al momento de comparar con el fuego rápido, he logrado reducir la velocidad (1,4 segundos: 15000 ligeros vs 2000 cruceros en mi pc lentisima.)
+Lástima que no se pudiese aplicar la técnica de los callbacks a los ataques de las naves, pero ya habr{a alguna forma de hacerlo.
+Update: Limpieza, limpieza. Eventualmente he llegado a la marca de 1,2 segundos.
+
+PENDIENTE: eliminar todos los globals.
+
+17-04-09
+Versión 0.48b (sobre-escritura de la versión anterior)
+Veamos. Se removió la clase BattleBot, pues su implementación desde el principo del proyecto fue algo extraña.
+Usando foreach, y moviendo algunas cosas, se ha logrado pasar la barrera del segundo en el clásico loop de ataque cruceros vs ligeros.
+Fueron removidas las referencias globales, (la mayoria?) y ahora se usa un objeto que controla las variables del juego.
+Se agregó una clase para realizar las estadisticas de tiempo, y sería bueno agregarle un medidor de memoria.
+Creo que ya es hora de desarrollar el entorno visual.
+
+---------------------------------------------
+
+08-04-12
+Version 0.5a
+Y bueno, se han aprendido varias cosas en estos años :) Creamos el front, que estaba pendiente.
+Varios parches por alli y alla (mas que nada, relacionados a la funcionalidad de la aplicacion).
+Pendiente: corregir algunas cosas y mejorar la visibilidad de los reportes
+- Bugs y cambios pendientes:
+////////////////////////////////////////////////////
+- remover las defensas del listado de atacantes - OK
+- odd /even rows - OK
+- mejorar la presentacion del popup
+- corregir el centrado de las tablas de flotas
+
+---------------------------------------------
+
+24-12-14
+Version 0.6.0a
+Aprovechando que Zephir ya está disponible, es hora de reescribir el código fuente como una extensión nativa,
+con la finalidad de mejorar el desempeño, y de competir con los grandes simuladores de Ogame.
+Felizmente la lógica ya está avanzada. Las pruebas se realizarán en PHP 5.6, pero de seguro el rendimiento mejorará mucho más con PHP 7.
+Primer éxito: lograr vandalizar la página de extensiones de PHP
+
+---------------------------------------------
+
+27-12-14
+- Zephir no soporta structs... Hmm...
+Y revisando el viejo código PHP, despues de unas pequeñas modificaciones la famosa batalla de 15000 ligeros vs 2000 cruceros demora 0.12301206588745 segundos (en PHP 5.6 y usando una modesta Laptop)
+Está mejor que hace algunos años :), pero yo todavía intento simular 100 batallas en un segundo.
+- Ya tengo casi lista la sección que simula las batallas en Zephir. Mi duda mayor es si los objetos son pasados por referencia. En fin.
+
+---------------------------------------------
+
+28-12-14
+Ok... terminé el simulador en Zephir. Sin embargo, el uso de rand() no da los mismos resultados (y es un poco lioso)
+Apenas corrija eso tendre un simulador con los mismos tiempos de ejecución del hecho en PHP :) (Y de mayor uso de RAM)
+Como primer intento está bien. Solo que para mejorar el rendimiento necesitaría bastaaaantes conocimientos de C
+
+---------------------------------------------
+
+30-12-14
+Pasando las clases a Javascript/Node.js. Nada pierdo con intentar, no? No?
+
+---------------------------------------------
+
+31-12-14
+* node.js es 10 veces mas rápido para simular la batalla, que PHP 5.6. ¡Quién lo diría!
+Esto es así, al simular 150000 ligeros vs 20000 cruceros. (3.6 segundos vs 0.358 segundos)
+Para números bajos de naves tienen valores parecidos.
+* Y en node.js obtengo 2.8 segundos de tiempo total para 1500000 ligeros vs 200000 cruceros. Se podrá optimizar?
+Si logro reducir los tiempos al 10%, podré tener algo parecido al Dragosim.
+* Aparentemente mi laptop es mas rápida que un VPS! (3.8 sec)
+* Aparentemente es mas rápida que otro VPS! (3.5 sec)
+
+18-03-15
+Al parecer la mejor manera de implementar el simulador es usando Js desde el lado del visitante
+Pero, IE no soporta procesos paralelos :| y me da flojera seguir investigando
+Probando el simulador en PHP 7 dev, la batalla de 15000 ligeros vs 2000 cruceros termina en 0.05 segundos, pero yo todavia espero una optimizacion de 1000% en la velocidad.
+Me he bajado la versión PHP 7 STH con la finalidad de mover todo a strict types,
+19-03-15
+Aunqué ... yo todavía estoy esperando y esperando. En este caso espero el convertidor de PHP a Extension del que había hablado Anthony Ferrara
+
+18-04-15
+Hola. En Linux (como S.O. nativo) obtengo 2.5 segundos simulando 1500000 ligeros vs 200000 cruceros.
+Otra novedad: En Zephir, usando optimizadores, puedo eliminar las llamadas a funciones de PHP de numeros aleatorios.
+PERO ESE NO ES EL PROBLEMA. Zephir genera centenares de macros para manejar las variables que he creado en el loop de batalla, y el performance es el mismo que con PHP normal.
+Aparte de eso, hay unos errores en el simulador, pero es otro tema. Habrá que probar con Hacklang, que ya habia avanzado algo.
+Sin embargo, usar js para simular no es una mala idea, ya que no usaría recursos del server...
+
+19-04-15
+Cosas por hacer:
+Que el array de fleetunittype sea solo numérico, para ver si cambia en algo el performance (o separar los arrays por tipos).
+Usando el unittypetracker, el app es 7 veces mas lento (con o sin llamada de funciones de busqueda), asi q no va por el momento :)
+He convertido el proyecto de node.js en open source, para ver si alguien me da una mano: https://github.com/dlaynes/ogsim-nodejs
+Parece que no hay manos.
+
+-----------------------------------------------
+
+04-08-15
+El proyecto fue copiado a golang. 1.5 veces mas rápido que en node.js.
+Seguramente es mas rápido con optimizaciones. Ni idea de como realizar dichas optimizaciones.
