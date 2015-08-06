@@ -2,7 +2,7 @@ neoarcknight - at  * gmail - dot * com
 No spam please.
 
 
-Ogame Virtual, aplicación basada en el sistema de batallas de ogame. Creada por NeoArc, en lenguaje php :)
+Ogame Virtual, aplicación basada en el sistema de batallas de ogame. Creada por NeoArc, en lenguaje php (y copiado a otros lenguajes) :)
 Todos los archivos incluidos son originales de Ogame Virtual, exceptuando las imágenes.
 
 10-09-07
@@ -122,3 +122,7 @@ Parece que no hay manos.
 04-08-15
 El proyecto fue copiado a golang. 1.5 veces mas rápido que en node.js.
 Seguramente es mas rápido con optimizaciones. Ni idea de como realizar dichas optimizaciones.
+
+05-08-15
+Correcciones menores en la limpieza de naves destruidas, y captura/exclusión de fuego rápido (8% de mejora en la velocidad)
+Otros cambios no sirvieron de mucho. Hora de probar Nim, y quizás Rust
