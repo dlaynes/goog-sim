@@ -16,6 +16,8 @@ func main() {
 	var profiler = &tools.Profiler{}
 	profiler.Init(40)
 
+	profiler.StartTask("full_simulation")
+
 	profiler.StartTask("load_resources")
 
 	var attackerGroup = &simulator.FleetGroup{}
@@ -143,6 +145,8 @@ func main() {
 
 	//fmt.Printf("%#v\n", attackerGroup.Ships)
 	//fmt.Printf("%#v\n", defenderGroup.Ships)
+
+	profiler.EndTask("full_simulation")
 
 	/* Results */
 
