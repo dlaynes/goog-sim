@@ -1,1 +1,7 @@
+binary_goog
+binary_gcc_goog
+bower_components
 goog
+gtk.go
+window.go
+form/

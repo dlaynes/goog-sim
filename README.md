@@ -1,4 +1,4 @@
-#Ogame Battle Simulator
+#GoOgame Battle Simulator
 
 ````
 go run goog.go

@@ -1,14 +1,16 @@
+// Copyright 2015 Donato Cassel Laynes Gonzales
+//
+// This file is part of GoOgame - Battle Simulator
+
 package main
 
 import (
-	"./simulator"
-	"./tools"
+	"github.com/dlaynes/goog-sim/simulator"
+	"github.com/dlaynes/goog-sim/tools"
 
 	"encoding/json"
 	"fmt"
-	//	"io"
 	"io/ioutil"
-	//"log"
 	"strconv"
 )
 
@@ -24,10 +26,10 @@ func main() {
 	var defenderGroup = &simulator.FleetGroup{}
 
 	var resources = map[string]*simulator.Resource{}
-	ParseJson("./data/resources.json", &resources)
+	ParseJson("./config/resources.json", &resources)
 
 	var rapidfire = map[string]map[string]float64{}
-	ParseJson("./data/rapidfire.json", &rapidfire)
+	ParseJson("./config/rapidfire.json", &rapidfire)
 
 	var attackers = []*simulator.Player{}
 	ParseJson("./data/attackers.json", &attackers)

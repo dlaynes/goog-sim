@@ -1,3 +1,7 @@
+// Copyright 2015 Donato Cassel Laynes Gonzales
+//
+// This file is part of GoOgame - Battle Simulator
+
 package simulator
 
 import (
@@ -78,7 +82,7 @@ func (this *Player) ExpandTo(group *FleetGroup, resources map[string]*Resource) 
 	this.processShipTypes(resources)
 
 	for _, t := range this.ShipTypes {
-		t.ExpandTo(group.Ships)
+		t.ExpandTo(group)
 	}
 }
 
@@ -129,18 +133,20 @@ func (this *ShipType) Expand() []*ShipUnit {
 	return sh
 }
 
-func (this *ShipType) ExpandTo(ships []*ShipUnit) {
+func (this *ShipType) ExpandTo(group *FleetGroup) {
+
+	ships := group.Ships
 	l := len(ships)
 
 	fmt.Println("Len " + strconv.Itoa(l))
 	fmt.Println("Capacity " + strconv.Itoa(cap(ships)))
 	fmt.Println("Amount " + strconv.Itoa(this.Amount))
 
-	//not working ?_?
 	for i := l; i < this.Amount+l; i++ {
 		//fmt.Println("Appending to " + strconv.Itoa(i))
-		ships[i] = &ShipUnit{T: this, A: this.BaseAttack, S: this.BaseShield, H: this.BaseHull}
+		ships = append(ships, &ShipUnit{T: this, A: this.BaseAttack, S: this.BaseShield, H: this.BaseHull})
 	}
+	group.Ships = ships
 }
 
 /* TO DO */
@@ -157,11 +163,9 @@ func (this *FleetGroup) Init() {
 	this.Ships = make([]*ShipUnit, 0)
 }
 
-/*
 func (this *FleetGroup) InitWith(length int) {
 	this.Ships = make([]*ShipUnit, 0, length)
 }
-*/
 
 func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 
@@ -177,6 +181,10 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 
 	//r := &rand.Rand
 
+	//function pointers
+	ri := rand.Intn
+	rf := rand.Float64
+
 	//TO DO: add concurrency, and use binary operations ...
 	for i := 0; i < c; i++ {
 
@@ -190,7 +198,7 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 		for running {
 			this.TurnDamage += Dm //We shoot! and we update the statistics accordingly
 
-			uPtr = otherGroup.Ships[rand.Intn(m)]
+			uPtr = otherGroup.Ships[ri(m)]
 
 			if uPtr.H != 0.0 {
 				//Check if the shot is strong enough against Large Shield Domes
@@ -206,7 +214,7 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 							uPtr.H -= De
 
 							xp = (uPtr.T.BaseHull - uPtr.H) / uPtr.H
-							if xp > 0.3 && rand.Float64() < xp {
+							if xp > 0.3 && rf() < xp {
 								//boom!
 								uPtr.H = 0.0
 								uPtr.T.Explosions += 1
@@ -236,7 +244,7 @@ func (this *FleetGroup) Attack(otherGroup *FleetGroup) bool {
 
 				//fmt.Println("Rapidfire value " + strconv.FormatFloat(val, 'g', 1, 64))
 
-				if rand.Float64() < val {
+				if rf() < val {
 					this.TurnAttacks++
 				} else {
 					running = false

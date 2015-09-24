@@ -1,3 +1,7 @@
+// Copyright 2015 Donato Cassel Laynes Gonzales
+//
+// This file is part of GoOgame - Battle Simulator
+
 package tools
 
 import (
