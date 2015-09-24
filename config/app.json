@@ -1,7 +1,6 @@
 {
     "googame_version": "0.1.0",
 
-    //Ogame
     "base_domain": "ogame.gameforge.com",
     "domains": [
         "ar", "ba", "br", "de", "dk", "us", "es", "fr", "en", "it", "tr", "pl", "gr","tw",
